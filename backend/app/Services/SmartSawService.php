@@ -2,111 +2,120 @@
 
 namespace App\Services;
 
-use App\Models\RasioKeuangan;
 use App\Models\Kriteria;
-use App\Models\Peringkat;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+use RuntimeException;
 
 class SmartSawService
 {
-    public function calculateRanking($tahun)
+    /**
+     * Jalankan tahapan normalisasi SMART (bobot) dan SAW (matriks keputusan & ranking).
+     *
+     * @return int Jumlah total baris peringkat yang dihasilkan
+     * @throws RuntimeException Jika data rasio atau kriteria kosong
+     * @throws InvalidArgumentException Jika total bobot kriteria <= 0
+     */
+    public function calculateAllRankings(): int
     {
+        $dataRasio = DB::table('rasio_keuangan')->get();
+
+        if ($dataRasio->isEmpty()) {
+            throw new RuntimeException('Hitung rasio dulu!');
+        }
+
+        $kriteria = Kriteria::all();
+        if ($kriteria->isEmpty()) {
+            throw new RuntimeException('Data kriteria belum ada! Tambahkan kriteria terlebih dahulu.');
+        }
+
         // 1. TAHAP SMART: Normalisasi Bobot Kriteria
-        $kriteriaList = Kriteria::all();
-        $totalBobotAwal = $kriteriaList->sum('bobot_awal');
-
-        $bobot = [];
-        foreach ($kriteriaList as $kriteria) {
-            // Rumus SMART: Wj = wj / sum(wj)
-            $nilaiNormalisasi = $kriteria->bobot_awal / $totalBobotAwal;
-            
-            $kriteria->update(['bobot_normalisasi' => $nilaiNormalisasi]);
-            $bobot[$kriteria->kode] = [
-                'nilai' => $nilaiNormalisasi,
-                'atribut' => $kriteria->atribut
-            ];
+        $totalBobot = (float) $kriteria->sum('bobot_awal');
+        if ($totalBobot <= 0) {
+            throw new InvalidArgumentException('Total bobot kriteria harus lebih besar dari 0!');
         }
 
-        // 2. TAHAP SAW: Normalisasi Matriks Keputusan
-        $rasioList = RasioKeuangan::where('tahun', $tahun)->get();
-
-        if ($rasioList->isEmpty()) {
-            return false; // Tidak ada data untuk dihitung
+        foreach ($kriteria as $k) {
+            $k->bobot_normalisasi = $k->bobot_awal / $totalBobot;
+            $k->save();
         }
 
-        // Cari Nilai Max dan Min untuk setiap kriteria di tahun tersebut
-        $maxMin = [
-            'roa' => ['max' => $rasioList->max('roa'), 'min' => $rasioList->min('roa')],
-            'roe' => ['max' => $rasioList->max('roe'), 'min' => $rasioList->min('roe')],
-            'npm' => ['max' => $rasioList->max('npm'), 'min' => $rasioList->min('npm')],
-            'rasio_arus_kas_operasi' => ['max' => $rasioList->max('rasio_arus_kas_operasi'), 'min' => $rasioList->min('rasio_arus_kas_operasi')],
-            'rasio_utang' => ['max' => $rasioList->max('rasio_utang'), 'min' => $rasioList->min('rasio_utang')],
-        ];
+        $bobot = $kriteria->pluck('bobot_normalisasi', 'kode');
 
-        $hasilPeringkat = [];
+        // 2. TAHAP SAW: Normalisasi Matriks Keputusan & Perangkingan per Tahun
+        $totalInserted = 0;
 
-        foreach ($rasioList as $rasio) {
-            $nilaiPreferensi = 0;
+        DB::transaction(function () use ($dataRasio, $bobot, &$totalInserted) {
+            DB::table('peringkat')->delete();
 
-            // Pemetaan nilai rasio ke dalam array untuk dilooping berdasarkan Kriteria
-            $nilaiAlternatif = [
-                'C1' => $rasio->roa, // Asumsi C1 adalah ROA (Benefit)
-                'C2' => $rasio->roe, // Asumsi C2 adalah ROE (Benefit)
-                'C3' => $rasio->npm, // Asumsi C3 adalah NPM (Benefit)
-                'C4' => $rasio->rasio_arus_kas_operasi, // Asumsi C4 (Benefit)
-                'C5' => $rasio->rasio_utang, // Asumsi C5 adalah Rasio Utang (Cost)
-            ];
+            $insertData    = [];
+            $groupedByYear = $dataRasio->groupBy('tahun');
+            $derFloor      = 0.05;
 
-            // Mapping kriteria code ke nama kolom untuk ambil nilai Max/Min
-            $kodeToColumn = ['C1' => 'roa', 'C2' => 'roe', 'C3' => 'npm', 'C4' => 'rasio_arus_kas_operasi', 'C5' => 'rasio_utang'];
+            foreach ($groupedByYear as $tahun => $rasioTahun) {
+                $clampBenefit = fn($val, $cap) => max(0, min($val, $cap));
 
-            foreach ($bobot as $kode => $pengaturan) {
-                $kolom = $kodeToColumn[$kode];
-                $nilaiX = $nilaiAlternatif[$kode];
-                $r_ij = 0;
+                $maxMin = [
+                    'roa' => max(0.0001, $clampBenefit($rasioTahun->max('roa'), 40)),
+                    'roe' => max(0.0001, $clampBenefit($rasioTahun->max('roe'), 60)),
+                    'npm' => max(0.0001, $clampBenefit($rasioTahun->max('npm'), 60)),
+                    'kas' => max(0.0001, $clampBenefit($rasioTahun->max('rasio_arus_kas_operasi'), 0.30)),
+                    // Floor diterapkan ke SETIAP nilai DER dulu, baru dicari minimumnya
+                    'der' => $rasioTahun->map(fn($r) => max($r->rasio_utang, $derFloor))->min(),
+                ];
 
-                // Rumus Normalisasi SAW
-                if ($pengaturan['atribut'] == 'benefit') {
-                    $r_ij = $maxMin[$kolom]['max'] > 0 ? ($nilaiX / $maxMin[$kolom]['max']) : 0;
-                } elseif ($pengaturan['atribut'] == 'cost') {
-                    $r_ij = $nilaiX > 0 ? ($maxMin[$kolom]['min'] / $nilaiX) : 0;
+                $hasilTahun = [];
+
+                foreach ($rasioTahun as $row) {
+                    $roa_val = $clampBenefit($row->roa, 40);
+                    $roe_val = $clampBenefit($row->roe, 60);
+                    $npm_val = $clampBenefit($row->npm, 60);
+                    $kas_val = $clampBenefit($row->rasio_arus_kas_operasi, 0.30);
+                    $der_val = max($row->rasio_utang, $derFloor);
+
+                    $n_roa = $maxMin['roa'] > 0 ? $roa_val / $maxMin['roa'] : 0;
+                    $n_roe = $maxMin['roe'] > 0 ? $roe_val / $maxMin['roe'] : 0;
+                    $n_npm = $maxMin['npm'] > 0 ? $npm_val / $maxMin['npm'] : 0;
+                    $n_kas = $maxMin['kas'] > 0 ? $kas_val / $maxMin['kas'] : 0;
+                    $n_der = $der_val > 0 ? $maxMin['der'] / $der_val : 0;
+
+                    $nilai_v =
+                        ($n_roa * ($bobot['C1'] ?? 0.25)) +
+                        ($n_roe * ($bobot['C2'] ?? 0.25)) +
+                        ($n_npm * ($bobot['C3'] ?? 0.20)) +
+                        ($n_kas * ($bobot['C4'] ?? 0.15)) +
+                        ($n_der * ($bobot['C5'] ?? 0.15));
+
+                    $hasilTahun[] = [
+                        'perusahaan_id' => $row->perusahaan_id,
+                        'tahun'         => $tahun,
+                        'nilai'         => $nilai_v,
+                    ];
                 }
 
-                // Rumus Nilai Preferensi Akhir (Vi)
-                $nilaiPreferensi += ($pengaturan['nilai'] * $r_ij);
+                // 3. TAHAP PERANGKINGAN (Sorting dari nilai terbesar ke terkecil)
+                usort($hasilTahun, fn($a, $b) => $b['nilai'] <=> $a['nilai']);
+
+                foreach ($hasilTahun as $index => $hasil) {
+                    $insertData[] = [
+                        'perusahaan_id'    => $hasil['perusahaan_id'],
+                        'tahun'            => $tahun,
+                        'nilai_preferensi' => $hasil['nilai'],
+                        'peringkat_ke'     => $index + 1,
+                        'status_kesehatan' => $hasil['nilai'] >= 0.8
+                            ? 'Sangat Sehat'
+                            : ($hasil['nilai'] >= 0.6 ? 'Sehat' : 'Kurang Sehat'),
+                    ];
+                }
             }
 
-            // Simpan sementara di array untuk di-sorting
-            $hasilPeringkat[] = [
-                'perusahaan_id' => $rasio->perusahaan_id,
-                'tahun' => $tahun,
-                'nilai_preferensi' => $nilaiPreferensi,
-            ];
-        }
+            foreach (array_chunk($insertData, 500) as $chunk) {
+                DB::table('peringkat')->insert($chunk);
+            }
 
-        // 3. TAHAP PERANGKINGAN (Sorting dari nilai terbesar ke terkecil)
-        usort($hasilPeringkat, function ($a, $b) {
-            return $b['nilai_preferensi'] <=> $a['nilai_preferensi'];
+            $totalInserted = count($insertData);
         });
 
-        // 4. SIMPAN KE TABEL PERINGKAT
-        $peringkatKe = 1;
-        foreach ($hasilPeringkat as $hasil) {
-            // Tentukan status kesehatan berdasarkan nilai (Opsional/Bisa disesuaikan)
-            $status = 'Kurang Sehat';
-            if ($hasil['nilai_preferensi'] >= 0.8) $status = 'Sangat Sehat';
-            elseif ($hasil['nilai_preferensi'] >= 0.6) $status = 'Sehat';
-
-            Peringkat::updateOrCreate(
-                ['perusahaan_id' => $hasil['perusahaan_id'], 'tahun' => $tahun],
-                [
-                    'nilai_preferensi' => $hasil['nilai_preferensi'],
-                    'peringkat_ke' => $peringkatKe,
-                    'status_kesehatan' => $status
-                ]
-            );
-            $peringkatKe++;
-        }
-
-        return true;
+        return $totalInserted;
     }
 }

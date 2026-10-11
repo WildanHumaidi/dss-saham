@@ -322,12 +322,12 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ## 4. CODE SMELL (Duplikasi, Dead Code, Antipatterns)
 
-### SML-01: Dead Code Ekstrem: `SmartSawService` dan `RatioService` Tidak Pernah Digunakan
+### SML-01: Dead Code Ekstrem: `SmartSawService` dan `RatioService` Tidak Pernah Digunakan [SELESAI]
+- **Status:** **SELESAI (Resolved - Opsi A)**
 - **Lokasi:** `backend/app/Services/SmartSawService.php` (112 baris) dan `RatioService.php` (61 baris)
 - **Tingkat Keparahan:** **HIGH (Architectural Debt)**
 - **Penjelasan:**  
-  Repositori memiliki service class khusus `SmartSawService` dan `RatioService`. Namun, kedua file ini **TIDAK PERNAH DIINJEKSI ATAU DIPANGGIL** di controller mana pun. Seluruh kalkulasi rasio dan pemeringkatan SAW ditulis ulang secara inline di dalam `AnalitikController.php` (364 baris).  
-  Lebih parah lagi, logika di `SmartSawService` berbeda (divergent) dari `AnalitikController` (misal: di service tidak ada clamping outlier dan tidak ada DER floor). Ini menciptakan kebingungan pengembang dan risiko regresi besar.
+  Sesuai arahan desain Opsi A, seluruh logika perhitungan rasio keuangan serta normalisasi SMART & pemeringkatan SAW telah dipindahkan ke dalam `RatioService` dan `SmartSawService`. `AnalitikController` kini bertindak sebagai koordinator (Single Responsibility Principle) dengan meng-inject kedua service class tersebut. Seluruh logika clamping outlier, penanganan laba negatif, dan proteksi pembagian nol telah diselaraskan. Dilengkapi unit test komprehensif pada `ServicesTest`.
 - **Saran Perbaikan:**  
   Pindahkan seluruh logika perhitungan dari `AnalitikController` ke dalam kedua service tersebut, jadikan controller hanya sebagai traffic coordinator (Single Responsibility Principle), lalu hapus duplikasi kode.
 
@@ -405,7 +405,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | **SELESAI** |
 | **SEC-06** | Keamanan | Dependensi front-end rentan High severity (Axios & React Router) | **HIGH** | **SELESAI** |
 | **LOG-01** | Bisnis | Harga saham & dividen hilang (menjadi 0) saat draft dipublikasi | **HIGH** | **SELESAI** |
-| **SML-01** | Code Smell | Dead code: Service `SmartSawService` & `RatioService` tidak terpakai | **HIGH** | Prioritas 2 |
+| **SML-01** | Code Smell | Dead code: Service `SmartSawService` & `RatioService` tidak terpakai | **HIGH** | **SELESAI** |
 | **BUG-03** | Bug | Bias perangkingan historis untuk emiten yang baru aktif 1 tahun | **MEDIUM** | Prioritas 3 |
 | **BUG-04** | Bug | Crash duplicate entry saat update tahun laporan keuangan | **MEDIUM** | Prioritas 3 |
 | **SEC-05** | Keamanan | Potensi path traversal pada upload gambar draft | **MEDIUM** | Prioritas 3 |

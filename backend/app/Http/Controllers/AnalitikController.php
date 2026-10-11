@@ -6,7 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\LaporanKeuangan;
 use App\Models\Perusahaan;
 use App\Models\Kriteria;
+use App\Services\RatioService;
+use App\Services\SmartSawService;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+use RuntimeException;
 
 class AnalitikController extends Controller
 {
@@ -63,79 +67,19 @@ class AnalitikController extends Controller
 
     // =========================================================================
     // 2. HITUNG RASIO KEUANGAN & SIMPAN KE TABEL 'rasio_keuangan'
-    // FIX: hanya pakai data berstatus 'dipublikasi' — sebelumnya SEMUA status
-    //      (termasuk draft yang belum direview) ikut dihitung dan memengaruhi
-    //      ranking publik.
-    // FIX: dibungkus DB::transaction() — sebelumnya delete lalu insert
-    //      dilakukan terpisah tanpa transaksi; kalau insert gagal di tengah
-    //      (mis. chunk ke-3 dari 5), tabel rasio_keuangan bisa tertinggal
-    //      kosong/separuh tanpa rollback otomatis.
+    // Delegated to RatioService
     // =========================================================================
-    public function hitungRasio(Request $request)
+    public function hitungRasio(Request $request, RatioService $ratioService)
     {
-        // Opsional: filter per tahun tertentu. Jika tidak diisi → hitung semua.
         $tahunFilter = $request->input('tahun');
+        $processed = $ratioService->calculateRatios($tahunFilter ? (int) $tahunFilter : null);
 
-        $query = LaporanKeuangan::query()->where('status_data', 'dipublikasi');
-        if ($tahunFilter) {
-            $query->where('tahun', $tahunFilter);
-        }
-
-        $laporan = $query->get();
-
-        if ($laporan->isEmpty()) {
+        if ($processed === 0) {
             return response()->json([
                 'message' => 'Tidak ada data berstatus "dipublikasi" untuk dihitung. '
                     . 'Publikasikan data lewat menu Draft atau Admin terlebih dahulu.',
             ], 404);
         }
-
-        $safeDiv = fn($num, $den) => $den != 0 ? $num / $den : 0;
-        $clamp   = fn($val, $min, $max) => max($min, min($max, $val));
-
-        DB::transaction(function () use ($laporan, $tahunFilter, $safeDiv, $clamp) {
-            // Hapus hanya untuk tahun yang akan dihitung ulang,
-            // bukan seluruh tabel, agar data historis tahun lain tetap aman.
-            if ($tahunFilter) {
-                DB::table('rasio_keuangan')->where('tahun', $tahunFilter)->delete();
-            } else {
-                DB::table('rasio_keuangan')->delete();
-            }
-
-            $rasioData = [];
-
-            foreach ($laporan as $item) {
-                // ── ROA: laba_bersih / total_aset × 100 — wajar -20% s/d 40%
-                $roa = $clamp($safeDiv($item->laba_bersih, $item->total_aset) * 100, -20, 40);
-
-                // ── ROE: laba_bersih / total_ekuitas × 100 — wajar -30% s/d 60%
-                $roe = $clamp($safeDiv($item->laba_bersih, $item->total_ekuitas) * 100, -30, 60);
-
-                // ── NPM: laba_bersih / pendapatan × 100 — wajar -50% s/d 60%
-                $npm = $clamp($safeDiv($item->laba_bersih, $item->pendapatan) * 100, -50, 60);
-
-                // ── Rasio Arus Kas Operasi: arus_kas_operasi / total_aset — wajar 0 s/d 0.30
-                $kas = $clamp($safeDiv($item->arus_kas_operasi, $item->total_aset), 0, 0.30);
-
-                // ── DER: total_liabilitas / total_ekuitas (DER sejati, konsisten
-                //    dengan kriteria C5 dan RatioService). Clamp min 0.
-                $der = max(0, $safeDiv($item->total_liabilitas, $item->total_ekuitas));
-
-                $rasioData[] = [
-                    'perusahaan_id'          => $item->perusahaan_id,
-                    'tahun'                  => $item->tahun,
-                    'roa'                    => round($roa, 4),
-                    'roe'                    => round($roe, 4),
-                    'npm'                    => round($npm, 4),
-                    'rasio_arus_kas_operasi' => round($kas, 6),
-                    'rasio_utang'            => round($der, 4),
-                ];
-            }
-
-            foreach (array_chunk($rasioData, 500) as $chunk) {
-                DB::table('rasio_keuangan')->insert($chunk);
-            }
-        });
 
         $label = $tahunFilter ? "tahun {$tahunFilter}" : "seluruh tahun";
         return response()->json(['message' => "Rasio {$label} berhasil dihitung dari data yang sudah dipublikasikan!"]);
@@ -143,116 +87,18 @@ class AnalitikController extends Controller
 
     // =========================================================================
     // 3. HITUNG PERINGKAT SAW (SEMUA TAHUN OTOMATIS)
-    // FIX: bug normalisasi DER — floor 0.05 sebelumnya diterapkan hanya ke
-    //      nilai minimum grup (pembilang), sehingga saat DER asli terkecil
-    //      di suatu tahun < 0.05, n_der = pembilang/penyebut bisa > 1
-    //      (skor SAW "meledak" melebihi batas wajar 0..1). Sekarang floor
-    //      diterapkan KONSISTEN ke kedua sisi (nilai minimum grup maupun
-    //      nilai per-baris) sebelum pembagian, sehingga n_der selalu <= 1,
-    //      sekaligus floor tetap berfungsi mencegah satu emiten dengan DER
-    //      mendekati nol "menghancurkan" skor semua emiten lain.
-    // FIX: dibungkus DB::transaction() dengan alasan yang sama seperti
-    //      hitungRasio().
+    // Delegated to SmartSawService
     // =========================================================================
-    public function hitungPeringkat()
+    public function hitungPeringkat(SmartSawService $smartSawService)
     {
-        $dataRasio = DB::table('rasio_keuangan')->get();
-
-        if ($dataRasio->isEmpty()) {
-            return response()->json(['message' => 'Hitung rasio dulu!'], 400);
+        try {
+            $smartSawService->calculateAllRankings();
+            return response()->json(['message' => 'Peringkat seluruh periode historis selesai dihitung!']);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
         }
-
-        $kriteria = Kriteria::all();
-        if ($kriteria->isEmpty()) {
-            return response()->json(['message' => 'Data kriteria belum ada! Tambahkan kriteria terlebih dahulu.'], 400);
-        }
-
-        $totalBobot = (float) $kriteria->sum('bobot_awal');
-        if ($totalBobot <= 0) {
-            return response()->json(['message' => 'Total bobot kriteria harus lebih besar dari 0!'], 422);
-        }
-
-        foreach ($kriteria as $k) {
-            $k->bobot_normalisasi = $k->bobot_awal / $totalBobot;
-            $k->save();
-        }
-
-        $bobot = $kriteria->pluck('bobot_normalisasi', 'kode');
-
-        DB::transaction(function () use ($dataRasio, $bobot) {
-            DB::table('peringkat')->delete();
-
-            $insertData    = [];
-            $groupedByYear = $dataRasio->groupBy('tahun');
-            $derFloor      = 0.05;
-
-            foreach ($groupedByYear as $tahun => $rasioTahun) {
-
-                $clampBenefit = fn($val, $cap) => max(0, min($val, $cap));
-
-                $maxMin = [
-                    'roa' => max(0.0001, $clampBenefit($rasioTahun->max('roa'), 40)),
-                    'roe' => max(0.0001, $clampBenefit($rasioTahun->max('roe'), 60)),
-                    'npm' => max(0.0001, $clampBenefit($rasioTahun->max('npm'), 60)),
-                    'kas' => max(0.0001, $clampBenefit($rasioTahun->max('rasio_arus_kas_operasi'), 0.30)),
-                    // Floor diterapkan ke SETIAP nilai DER dulu, baru dicari
-                    // minimumnya — bukan floor terhadap nilai minimum mentah.
-                    'der' => $rasioTahun->map(fn($r) => max($r->rasio_utang, $derFloor))->min(),
-                ];
-
-                $hasilTahun = [];
-
-                foreach ($rasioTahun as $row) {
-                    $roa_val = $clampBenefit($row->roa, 40);
-                    $roe_val = $clampBenefit($row->roe, 60);
-                    $npm_val = $clampBenefit($row->npm, 60);
-                    $kas_val = $clampBenefit($row->rasio_arus_kas_operasi, 0.30);
-                    $der_val = max($row->rasio_utang, $derFloor);
-
-                    $n_roa = $maxMin['roa'] > 0 ? $roa_val / $maxMin['roa'] : 0;
-                    $n_roe = $maxMin['roe'] > 0 ? $roe_val / $maxMin['roe'] : 0;
-                    $n_npm = $maxMin['npm'] > 0 ? $npm_val / $maxMin['npm'] : 0;
-                    $n_kas = $maxMin['kas'] > 0 ? $kas_val / $maxMin['kas'] : 0;
-                    // n_der selalu <= 1 karena maxMin['der'] adalah nilai
-                    // TERKECIL dari himpunan yang sama-sama sudah di-floor
-                    // seperti $der_val.
-                    $n_der = $der_val > 0 ? $maxMin['der'] / $der_val : 0;
-
-                    $nilai_v =
-                        ($n_roa * ($bobot['C1'] ?? 0.25)) +
-                        ($n_roe * ($bobot['C2'] ?? 0.25)) +
-                        ($n_npm * ($bobot['C3'] ?? 0.20)) +
-                        ($n_kas * ($bobot['C4'] ?? 0.15)) +
-                        ($n_der * ($bobot['C5'] ?? 0.15));
-
-                    $hasilTahun[] = [
-                        'perusahaan_id' => $row->perusahaan_id,
-                        'tahun'         => $tahun,
-                        'nilai'         => $nilai_v,
-                    ];
-                }
-
-                usort($hasilTahun, fn($a, $b) => $b['nilai'] <=> $a['nilai']);
-
-                foreach ($hasilTahun as $index => $hasil) {
-                    $insertData[] = [
-                        'perusahaan_id'    => $hasil['perusahaan_id'],
-                        'tahun'            => $tahun,
-                        'nilai_preferensi' => $hasil['nilai'],
-                        'peringkat_ke'     => $index + 1,
-                        'status_kesehatan' => $hasil['nilai'] >= 0.8
-                            ? 'Sangat Sehat'
-                            : ($hasil['nilai'] >= 0.6 ? 'Sehat' : 'Kurang Sehat'),
-                    ];
-                }
-            }
-
-            foreach (array_chunk($insertData, 500) as $chunk) {
-                DB::table('peringkat')->insert($chunk);
-            }
-        });
-
-        return response()->json(['message' => 'Peringkat seluruh periode historis selesai dihitung!']);
     }
 
     // =========================================================================

@@ -3,59 +3,72 @@
 namespace App\Services;
 
 use App\Models\LaporanKeuangan;
-use App\Models\RasioKeuangan;
+use Illuminate\Support\Facades\DB;
 
 class RatioService
 {
     /**
-     * Hitung rasio keuangan untuk satu tahun dan simpan/update ke tabel rasio_keuangan.
+     * Hitung rasio keuangan dari data laporan keuangan yang sudah dipublikasikan.
+     * Dapat memproses satu tahun spesifik atau seluruh tahun sekaligus.
      *
-     * FIX: Formula diselaraskan dengan AnalitikController::hitungRasio agar
-     * tidak ada dua versi yang menghasilkan angka berbeda:
+     * Rasio yang dihitung:
+     * - ROA: laba_bersih / total_aset * 100 (clamp -20% s/d 40%)
+     * - ROE: laba_bersih / total_ekuitas * 100 (clamp -30% s/d 60%)
+     * - NPM: laba_bersih / pendapatan * 100 (clamp -50% s/d 60%)
+     * - Rasio Arus Kas Operasi: arus_kas_operasi / total_aset (clamp 0 s/d 0.30)
+     * - DER: total_liabilitas / total_ekuitas (clamp min 0)
      *
-     *   - rasio_arus_kas_operasi = arus_kas_operasi / total_aset
-     *     (bukan / total_liabilitas — total_liabilitas bisa = 0 untuk perusahaan
-     *     tanpa utang, menghasilkan pembagi nol)
-     *
-     *   - rasio_utang = total_liabilitas / total_ekuitas  (DER sejati)
-     *     (bukan / total_aset — itu adalah DAR, metrik yang berbeda dan tidak
-     *     sesuai dengan label "DER" di kriteria C5)
+     * @param int|null $tahunFilter
+     * @return int Jumlah baris laporan keuangan yang diproses
      */
-    public function calculateRatios(int $tahun): bool
+    public function calculateRatios(?int $tahunFilter = null): int
     {
-        $laporanList = LaporanKeuangan::where('tahun', $tahun)
-                                      ->where('status_data', 'dipublikasi')
-                                      ->get();
-
-        if ($laporanList->isEmpty()) {
-            return false;
+        $query = LaporanKeuangan::query()->where('status_data', 'dipublikasi');
+        if ($tahunFilter) {
+            $query->where('tahun', $tahunFilter);
         }
 
-        foreach ($laporanList as $laporan) {
-            $safeDiv = fn($num, $den) => $den != 0 ? $num / $den : 0;
+        $laporan = $query->get();
 
-            $roa = $safeDiv($laporan->laba_bersih,       $laporan->total_aset);
-            $roe = $safeDiv($laporan->laba_bersih,       $laporan->total_ekuitas);
-            $npm = $safeDiv($laporan->laba_bersih,       $laporan->pendapatan);
-
-            // FIX: pakai total_aset sebagai penyebut (konsisten dengan AnalitikController)
-            $rasio_arus_kas = $safeDiv($laporan->arus_kas_operasi, $laporan->total_aset);
-
-            // FIX: DER = liabilitas / ekuitas (bukan / total_aset)
-            $rasio_utang = $safeDiv($laporan->total_liabilitas, $laporan->total_ekuitas);
-
-            RasioKeuangan::updateOrCreate(
-                ['perusahaan_id' => $laporan->perusahaan_id, 'tahun' => $tahun],
-                [
-                    'roa'                    => $roa,
-                    'roe'                    => $roe,
-                    'npm'                    => $npm,
-                    'rasio_arus_kas_operasi' => $rasio_arus_kas,
-                    'rasio_utang'            => $rasio_utang,
-                ]
-            );
+        if ($laporan->isEmpty()) {
+            return 0;
         }
 
-        return true;
+        $safeDiv = fn($num, $den) => $den != 0 ? $num / $den : 0;
+        $clamp   = fn($val, $min, $max) => max($min, min($max, $val));
+
+        DB::transaction(function () use ($laporan, $tahunFilter, $safeDiv, $clamp) {
+            if ($tahunFilter) {
+                DB::table('rasio_keuangan')->where('tahun', $tahunFilter)->delete();
+            } else {
+                DB::table('rasio_keuangan')->delete();
+            }
+
+            $rasioData = [];
+
+            foreach ($laporan as $item) {
+                $roa = $clamp($safeDiv($item->laba_bersih, $item->total_aset) * 100, -20, 40);
+                $roe = $clamp($safeDiv($item->laba_bersih, $item->total_ekuitas) * 100, -30, 60);
+                $npm = $clamp($safeDiv($item->laba_bersih, $item->pendapatan) * 100, -50, 60);
+                $kas = $clamp($safeDiv($item->arus_kas_operasi, $item->total_aset), 0, 0.30);
+                $der = max(0, $safeDiv($item->total_liabilitas, $item->total_ekuitas));
+
+                $rasioData[] = [
+                    'perusahaan_id'          => $item->perusahaan_id,
+                    'tahun'                  => $item->tahun,
+                    'roa'                    => round($roa, 4),
+                    'roe'                    => round($roe, 4),
+                    'npm'                    => round($npm, 4),
+                    'rasio_arus_kas_operasi' => round($kas, 6),
+                    'rasio_utang'            => round($der, 4),
+                ];
+            }
+
+            foreach (array_chunk($rasioData, 500) as $chunk) {
+                DB::table('rasio_keuangan')->insert($chunk);
+            }
+        });
+
+        return $laporan->count();
     }
 }
