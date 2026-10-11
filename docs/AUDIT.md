@@ -123,7 +123,8 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ## 2. LOOPHOLE KEAMANAN (Security & Access Control)
 
-### SEC-01: Broken Access Control (Endpoint Mutasi Terbuka untuk Non-Admin)
+### SEC-01: Broken Access Control (Endpoint Mutasi Terbuka untuk Non-Admin) [SELESAI]
+- **Status:** **SELESAI (Resolved)**
 - **Lokasi:** `backend/routes/api.php` (Baris 44, 47, 50, 51, 52)
 - **Tingkat Keparahan:** **CRITICAL**
 - **Penjelasan:**  
@@ -389,7 +390,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 | ID Temuan | Kategori | Deskripsi Singkat | Tingkat Keparahan | Prioritas Aksi |
 | :--- | :--- | :--- | :--- | :--- |
-| **SEC-01** | Keamanan | Broken Access Control pada endpoint mutasi data keuangan & draft | **CRITICAL** | Prioritas 1 (Wajib) |
+| **SEC-01** | Keamanan | Broken Access Control pada endpoint mutasi data keuangan & draft | **CRITICAL** | **SELESAI** |
 | **SEC-02** | Keamanan | Kredensial super admin hardcoded autofill di form login | **CRITICAL** | Prioritas 1 (Wajib) |
 | **BUG-01** | Bug | Uncaught `DivisionByZeroError` saat total bobot kriteria = 0 | **HIGH** | Prioritas 2 |
 | **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | Prioritas 2 |

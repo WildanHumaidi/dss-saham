@@ -40,26 +40,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user',    [AuthController::class, 'me']);
 
-    // ── Perusahaan (tambah — semua yang login) ──────────────────────────
-    Route::post('/perusahaan', [MasterController::class, 'storePerusahaan']);
-
-    // ── Laporan keuangan (InputData.jsx) ────────────────────────────────
-    Route::post('/laporan/upload-neraca', [LaporanController::class, 'uploadNeraca']);
-
-    // ── Draft & Upload Gambar (DraftLaporanController) ──────────────────
-    Route::post('/draft/ekstrak-gambar', [DraftLaporanController::class, 'ekstrakGambar']);
-    Route::post('/draft/upload-neraca',  [DraftLaporanController::class, 'uploadNeraca']);
-    Route::post('/draft/publish',        [DraftLaporanController::class, 'publishFinal']);
-
     // =========================================================================
     // ADMIN ONLY — role = 'admin'
     // =========================================================================
 
     Route::middleware('is_admin')->group(function () {
 
-        // Perusahaan: update & hapus
+        // ── Perusahaan (tambah, update, hapus) ───────────────────────────
+        Route::post('/perusahaan',        [MasterController::class, 'storePerusahaan']);
         Route::put('/perusahaan/{id}',    [MasterController::class, 'updatePerusahaan']);
         Route::delete('/perusahaan/{id}', [MasterController::class, 'destroyPerusahaan']);
+
+        // ── Laporan keuangan (InputData.jsx) ────────────────────────────────
+        Route::post('/laporan/upload-neraca', [LaporanController::class, 'uploadNeraca']);
+
+        // ── Draft & Upload Gambar (DraftLaporanController) ──────────────────
+        Route::post('/draft/ekstrak-gambar', [DraftLaporanController::class, 'ekstrakGambar']);
+        Route::post('/draft/upload-neraca',  [DraftLaporanController::class, 'uploadNeraca']);
+        Route::post('/draft/publish',        [DraftLaporanController::class, 'publishFinal']);
 
         // ── Kriteria ────────────────────────────────────────────────────
         // PINDAH ke admin-only (sebelumnya bisa diakses semua user login).
