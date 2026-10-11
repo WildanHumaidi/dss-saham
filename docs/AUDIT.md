@@ -241,11 +241,12 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ## 3. LOOPHOLE LOGIKA BISNIS (Business Logic Loopholes)
 
-### LOG-01: Hilangnya Data Harga Saham & Dividen Saat Menerbitkan Draft ke Publik
+### LOG-01: Hilangnya Data Harga Saham & Dividen Saat Menerbitkan Draft ke Publik [SELESAI]
+- **Status:** **SELESAI (Resolved - Opsi B)**
 - **Lokasi:** `backend/app/Http/Controllers/DraftLaporanController.php` (Baris 153–166)
 - **Tingkat Keparahan:** **HIGH**
 - **Penjelasan:**  
-  Tabel `draft_laporan_keuangan` dan form draft tidak memiliki kolom `harga_saham` dan `dividen`. Saat admin/analis menjalankan `publishFinal()`, method tersebut memindahkan data draft ke tabel `laporan_keuangan`:
+  Sesuai arahan desain Opsi B, ruang lingkup draft difokuskan khusus untuk neraca dan laba rugi. Pada method `publishFinal()`, telah ditambahkan proteksi preservasi nilai pasar (`harga_saham` dan `dividen`) dari data eksisting yang sudah diinput admin, sehingga nilai pasar tidak ter-reset menjadi 0 saat draft laporan keuangan dipublikasikan. Nilai pasar dapat dikelola secara independen lewat panel admin.
   ```php
   LaporanKeuangan::updateOrCreate(
       ['perusahaan_id' => $perusahaan->id, 'tahun' => $validated['tahun']],
@@ -403,7 +404,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | **SELESAI** |
 | **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | **SELESAI** |
 | **SEC-06** | Keamanan | Dependensi front-end rentan High severity (Axios & React Router) | **HIGH** | **SELESAI** |
-| **LOG-01** | Bisnis | Harga saham & dividen hilang (menjadi 0) saat draft dipublikasi | **HIGH** | Prioritas 2 |
+| **LOG-01** | Bisnis | Harga saham & dividen hilang (menjadi 0) saat draft dipublikasi | **HIGH** | **SELESAI** |
 | **SML-01** | Code Smell | Dead code: Service `SmartSawService` & `RatioService` tidak terpakai | **HIGH** | Prioritas 2 |
 | **BUG-03** | Bug | Bias perangkingan historis untuk emiten yang baru aktif 1 tahun | **MEDIUM** | Prioritas 3 |
 | **BUG-04** | Bug | Crash duplicate entry saat update tahun laporan keuangan | **MEDIUM** | Prioritas 3 |

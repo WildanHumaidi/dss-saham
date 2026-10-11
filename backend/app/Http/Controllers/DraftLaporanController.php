@@ -150,17 +150,23 @@ class DraftLaporanController extends Controller
             ], 422);
         }
 
+        $existing = LaporanKeuangan::where('perusahaan_id', $perusahaan->id)
+            ->where('tahun', $validated['tahun'])
+            ->first();
+
         $laporan = LaporanKeuangan::updateOrCreate(
             ['perusahaan_id' => $perusahaan->id, 'tahun' => $validated['tahun']],
             [
                 'total_aset'           => $draft->total_aset,
                 'total_liabilitas'     => $draft->total_liabilitas,
                 'total_ekuitas'        => $draft->total_ekuitas,
-                'jumlah_saham_beredar' => $draft->jumlah_saham_beredar ?? 0,
-                'pendapatan'           => $draft->pendapatan           ?? 0,
-                'laba_bersih'          => $draft->laba_bersih          ?? 0,
-                'arus_kas_operasi'     => $draft->arus_kas_operasi      ?? 0,
-                'skala_nominal'        => $draft->skala_nominal         ?? 'Miliar',
+                'jumlah_saham_beredar' => $draft->jumlah_saham_beredar ?? ($existing->jumlah_saham_beredar ?? 0),
+                'pendapatan'           => $draft->pendapatan           ?? ($existing->pendapatan ?? 0),
+                'laba_bersih'          => $draft->laba_bersih          ?? ($existing->laba_bersih ?? 0),
+                'arus_kas_operasi'     => $draft->arus_kas_operasi      ?? ($existing->arus_kas_operasi ?? 0),
+                'skala_nominal'        => $draft->skala_nominal         ?? ($existing->skala_nominal ?? 'Miliar'),
+                'harga_saham'          => $existing->harga_saham        ?? 0,
+                'dividen'              => $existing->dividen            ?? 0,
                 'status_data'          => 'dipublikasi',
             ]
         );
