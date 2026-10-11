@@ -182,7 +182,8 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ---
 
-### SEC-04: Personal Access Token Sanctum Berlaku Selamanya Tanpa Kedaluwarsa
+### SEC-04: Personal Access Token Sanctum Berlaku Selamanya Tanpa Kedaluwarsa [SELESAI]
+- **Status:** **SELESAI (Resolved)**
 - **Lokasi:** `backend/config/sanctum.php` (Baris 53)
 - **Tingkat Keparahan:** **HIGH**
 - **Penjelasan:**  
@@ -399,7 +400,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | **BUG-01** | Bug | Uncaught `DivisionByZeroError` saat total bobot kriteria = 0 | **HIGH** | **SELESAI** |
 | **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | **SELESAI** |
 | **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | **SELESAI** |
-| **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | Prioritas 2 |
+| **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | **SELESAI** |
 | **SEC-06** | Keamanan | Dependensi front-end rentan High severity (Axios & React Router) | **HIGH** | Prioritas 2 |
 | **LOG-01** | Bisnis | Harga saham & dividen hilang (menjadi 0) saat draft dipublikasi | **HIGH** | Prioritas 2 |
 | **SML-01** | Code Smell | Dead code: Service `SmartSawService` & `RatioService` tidak terpakai | **HIGH** | Prioritas 2 |
