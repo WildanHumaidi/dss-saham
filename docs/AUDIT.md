@@ -149,7 +149,8 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ---
 
-### SEC-02: Kredensial Super Admin Ter-Hardcode & Terisi Otomatis di Halaman Login Publik
+### SEC-02: Kredensial Super Admin Ter-Hardcode & Terisi Otomatis di Halaman Login Publik [SELESAI]
+- **Status:** **SELESAI (Resolved)**
 - **Lokasi:** `frontend/src/pages/login.jsx` (Baris 8–9) dan `backend/database/seeders/DatabaseSeeder.php` (Baris 20–23)
 - **Tingkat Keparahan:** **CRITICAL**
 - **Penjelasan:**  
@@ -391,7 +392,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | ID Temuan | Kategori | Deskripsi Singkat | Tingkat Keparahan | Prioritas Aksi |
 | :--- | :--- | :--- | :--- | :--- |
 | **SEC-01** | Keamanan | Broken Access Control pada endpoint mutasi data keuangan & draft | **CRITICAL** | **SELESAI** |
-| **SEC-02** | Keamanan | Kredensial super admin hardcoded autofill di form login | **CRITICAL** | Prioritas 1 (Wajib) |
+| **SEC-02** | Keamanan | Kredensial super admin hardcoded autofill di form login | **CRITICAL** | **SELESAI** |
 | **BUG-01** | Bug | Uncaught `DivisionByZeroError` saat total bobot kriteria = 0 | **HIGH** | Prioritas 2 |
 | **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | Prioritas 2 |
 | **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | Prioritas 2 |
