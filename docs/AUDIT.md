@@ -168,7 +168,8 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ---
 
-### SEC-03: Ketiadaan Rate Limiting (Throttle) pada Endpoint Login
+### SEC-03: Ketiadaan Rate Limiting (Throttle) pada Endpoint Login [SELESAI]
+- **Status:** **SELESAI (Resolved)**
 - **Lokasi:** `backend/routes/api.php` (Baris 15)
 - **Tingkat Keparahan:** **HIGH**
 - **Penjelasan:**  
@@ -397,7 +398,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | **SEC-02** | Keamanan | Kredensial super admin hardcoded autofill di form login | **CRITICAL** | **SELESAI** |
 | **BUG-01** | Bug | Uncaught `DivisionByZeroError` saat total bobot kriteria = 0 | **HIGH** | **SELESAI** |
 | **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | **SELESAI** |
-| **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | Prioritas 2 |
+| **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | **SELESAI** |
 | **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | Prioritas 2 |
 | **SEC-06** | Keamanan | Dependensi front-end rentan High severity (Axios & React Router) | **HIGH** | Prioritas 2 |
 | **LOG-01** | Bisnis | Harga saham & dividen hilang (menjadi 0) saat draft dipublikasi | **HIGH** | Prioritas 2 |
