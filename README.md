@@ -63,11 +63,11 @@ Sistem mengevaluasi emiten menggunakan 5 kriteria rasio fundamental utama:
 
 | Dashboard Analisis Historis | Simulasi Sensitivitas Bobot |
 | :---: | :---: |
-| ![Dashboard Overview](docs/screenshots/dashboard.png) *(Placeholder: Tampilan grafik tren & skor emiten)* | ![Simulasi Sensitivitas](docs/screenshots/sensitivity.png) *(Placeholder: Slider interaktif bobot kriteria)* |
+| ![Dashboard Overview](docs/screenshots/dashboard.png) | ![Simulasi Sensitivitas](docs/screenshots/sensitivity.png) |
 
 | Hasil Peringkat Multi-Tahun | Admin Terminal |
 | :---: | :---: |
-| ![Peringkat Saham](docs/screenshots/peringkat.png) *(Placeholder: Tabel skor preferensi & status)* | ![Admin Panel](docs/screenshots/admin.png) *(Placeholder: Manajemen laporan & user)* |
+| ![Peringkat Saham](docs/screenshots/peringkat.png) | ![Admin Panel](docs/screenshots/admin.png) |
 
 ---
 
