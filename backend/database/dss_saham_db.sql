@@ -1549,9 +1549,7 @@ CREATE TABLE `personal_access_tokens` (
 -- Dumping data for table `personal_access_tokens`
 --
 
-INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `name`, `token`, `abilities`, `last_used_at`, `expires_at`, `created_at`, `updated_at`) VALUES
-(19, 'App\\Models\\User', 3, 'auth_token', 'ae65209a9325d4e0b2434fba431c30902d90778ba3a2444d6cfd140857d8144a', '[\"*\"]', NULL, NULL, '2026-06-04 00:53:28', '2026-06-04 00:53:28'),
-(20, 'App\\Models\\User', 2, 'auth_token', '3d62d09eef012a95ea3250603dcca63ae47186639ad68b09c0198933df7e888b', '[\"*\"]', '2026-06-04 01:40:54', NULL, '2026-06-04 01:15:30', '2026-06-04 01:40:54');
+-- (Dibiarkan kosong untuk keamanan repositori publik)
 
 -- --------------------------------------------------------
 

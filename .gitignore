@@ -1,27 +1,58 @@
-# Backend
-backend/vendor/
+# Environment files
+.env
+.env.*
+!.env.example
 backend/.env
-backend/.env.backup
-backend/.env.production
-backend/.phpunit.result.cache
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Dependencies
+node_modules/
+vendor/
+backend/vendor/
+frontend/node_modules/
+
+# Production build outputs
+dist/
+dist-ssr/
+frontend/dist/
+frontend/dist-ssr/
+backend/public/build/
+backend/public/hot/
+backend/public/storage
+
+# Logs & Storage
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 backend/storage/*.key
 backend/storage/logs/*.log
 backend/storage/framework/cache/*
 backend/storage/framework/sessions/*
 backend/storage/framework/views/*
-backend/public/storage
-backend/public/build
-backend/public/hot
+!backend/storage/framework/cache/.gitignore
+!backend/storage/framework/sessions/.gitignore
+!backend/storage/framework/views/.gitignore
 
-# Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/dist-ssr/
-frontend/*.local
+# Test & coverage caches
+.phpunit.cache/
+.phpunit.result.cache
+backend/.phpunit.cache/
+backend/.phpunit.result.cache
+coverage/
 
-# OS / Editor
+# OS and Editor files
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
-*.log
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
