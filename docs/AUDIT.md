@@ -24,7 +24,8 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ## 1. BUG (Logic Error, Crash, Edge Case, Missing Error Handling)
 
-### BUG-01: Potensi Uncaught `DivisionByZeroError` saat Total Bobot Kriteria = 0
+### BUG-01: Potensi Uncaught `DivisionByZeroError` saat Total Bobot Kriteria = 0 [SELESAI]
+- **Status:** **SELESAI (Resolved)**
 - **Lokasi:** `backend/app/Http/Controllers/AnalitikController.php` (Baris 168–171)
 - **Tingkat Keparahan:** **HIGH**
 - **Penjelasan:**  
@@ -393,7 +394,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | :--- | :--- | :--- | :--- | :--- |
 | **SEC-01** | Keamanan | Broken Access Control pada endpoint mutasi data keuangan & draft | **CRITICAL** | **SELESAI** |
 | **SEC-02** | Keamanan | Kredensial super admin hardcoded autofill di form login | **CRITICAL** | **SELESAI** |
-| **BUG-01** | Bug | Uncaught `DivisionByZeroError` saat total bobot kriteria = 0 | **HIGH** | Prioritas 2 |
+| **BUG-01** | Bug | Uncaught `DivisionByZeroError` saat total bobot kriteria = 0 | **HIGH** | **SELESAI** |
 | **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | Prioritas 2 |
 | **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | Prioritas 2 |
 | **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | Prioritas 2 |

@@ -162,8 +162,15 @@ class AnalitikController extends Controller
             return response()->json(['message' => 'Hitung rasio dulu!'], 400);
         }
 
-        $kriteria   = Kriteria::all();
-        $totalBobot = $kriteria->sum('bobot_awal');
+        $kriteria = Kriteria::all();
+        if ($kriteria->isEmpty()) {
+            return response()->json(['message' => 'Data kriteria belum ada! Tambahkan kriteria terlebih dahulu.'], 400);
+        }
+
+        $totalBobot = (float) $kriteria->sum('bobot_awal');
+        if ($totalBobot <= 0) {
+            return response()->json(['message' => 'Total bobot kriteria harus lebih besar dari 0!'], 422);
+        }
 
         foreach ($kriteria as $k) {
             $k->bobot_normalisasi = $k->bobot_awal / $totalBobot;
