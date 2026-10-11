@@ -213,7 +213,8 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ---
 
-### SEC-06: Kerentanan Dependensi Front-End Berisiko Tinggi (NPM Audit)
+### SEC-06: Kerentanan Dependensi Front-End Berisiko Tinggi (NPM Audit) [SELESAI]
+- **Status:** **SELESAI (Resolved)**
 - **Lokasi:** `frontend/package.json` (Dependensi `axios` ^1.16.1, `react-router` ^7.16.0)
 - **Tingkat Keparahan:** **HIGH**
 - **Penjelasan:**  
@@ -401,7 +402,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | **SELESAI** |
 | **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | **SELESAI** |
 | **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | **SELESAI** |
-| **SEC-06** | Keamanan | Dependensi front-end rentan High severity (Axios & React Router) | **HIGH** | Prioritas 2 |
+| **SEC-06** | Keamanan | Dependensi front-end rentan High severity (Axios & React Router) | **HIGH** | **SELESAI** |
 | **LOG-01** | Bisnis | Harga saham & dividen hilang (menjadi 0) saat draft dipublikasi | **HIGH** | Prioritas 2 |
 | **SML-01** | Code Smell | Dead code: Service `SmartSawService` & `RatioService` tidak terpakai | **HIGH** | Prioritas 2 |
 | **BUG-03** | Bug | Bias perangkingan historis untuk emiten yang baru aktif 1 tahun | **MEDIUM** | Prioritas 3 |
