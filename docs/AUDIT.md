@@ -49,7 +49,8 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 
 ---
 
-### BUG-02: Normalisasi SAW Menghasilkan Nilai Negatif untuk Rasio Defisit (Kriteria Benefit)
+### BUG-02: Normalisasi SAW Menghasilkan Nilai Negatif untuk Rasio Defisit (Kriteria Benefit) [SELESAI]
+- **Status:** **SELESAI (Resolved)**
 - **Lokasi:** `backend/app/Http/Controllers/AnalitikController.php` (Baris 205–207)
 - **Tingkat Keparahan:** **HIGH**
 - **Penjelasan:**  
@@ -395,7 +396,7 @@ Berikut adalah rincian temuan yang dikelompokkan sesuai kategori:
 | **SEC-01** | Keamanan | Broken Access Control pada endpoint mutasi data keuangan & draft | **CRITICAL** | **SELESAI** |
 | **SEC-02** | Keamanan | Kredensial super admin hardcoded autofill di form login | **CRITICAL** | **SELESAI** |
 | **BUG-01** | Bug | Uncaught `DivisionByZeroError` saat total bobot kriteria = 0 | **HIGH** | **SELESAI** |
-| **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | Prioritas 2 |
+| **BUG-02** | Bug | Normalisasi benefit SAW menghasilkan nilai negatif untuk laba minus | **HIGH** | **SELESAI** |
 | **SEC-03** | Keamanan | Ketiadaan rate limiting (throttle) pada endpoint `/login` | **HIGH** | Prioritas 2 |
 | **SEC-04** | Keamanan | Personal access token Sanctum tidak pernah kedaluwarsa | **HIGH** | Prioritas 2 |
 | **SEC-06** | Keamanan | Dependensi front-end rentan High severity (Axios & React Router) | **HIGH** | Prioritas 2 |

@@ -188,13 +188,13 @@ class AnalitikController extends Controller
 
             foreach ($groupedByYear as $tahun => $rasioTahun) {
 
-                $capMax = fn($val, $cap) => min($val, $cap);
+                $clampBenefit = fn($val, $cap) => max(0, min($val, $cap));
 
                 $maxMin = [
-                    'roa' => $capMax($rasioTahun->max('roa'), 40),
-                    'roe' => $capMax($rasioTahun->max('roe'), 60),
-                    'npm' => $capMax($rasioTahun->max('npm'), 60),
-                    'kas' => $capMax($rasioTahun->max('rasio_arus_kas_operasi'), 0.30),
+                    'roa' => max(0.0001, $clampBenefit($rasioTahun->max('roa'), 40)),
+                    'roe' => max(0.0001, $clampBenefit($rasioTahun->max('roe'), 60)),
+                    'npm' => max(0.0001, $clampBenefit($rasioTahun->max('npm'), 60)),
+                    'kas' => max(0.0001, $clampBenefit($rasioTahun->max('rasio_arus_kas_operasi'), 0.30)),
                     // Floor diterapkan ke SETIAP nilai DER dulu, baru dicari
                     // minimumnya — bukan floor terhadap nilai minimum mentah.
                     'der' => $rasioTahun->map(fn($r) => max($r->rasio_utang, $derFloor))->min(),
@@ -203,10 +203,10 @@ class AnalitikController extends Controller
                 $hasilTahun = [];
 
                 foreach ($rasioTahun as $row) {
-                    $roa_val = min($row->roa, 40);
-                    $roe_val = min($row->roe, 60);
-                    $npm_val = min($row->npm, 60);
-                    $kas_val = min($row->rasio_arus_kas_operasi, 0.30);
+                    $roa_val = $clampBenefit($row->roa, 40);
+                    $roe_val = $clampBenefit($row->roe, 60);
+                    $npm_val = $clampBenefit($row->npm, 60);
+                    $kas_val = $clampBenefit($row->rasio_arus_kas_operasi, 0.30);
                     $der_val = max($row->rasio_utang, $derFloor);
 
                     $n_roa = $maxMin['roa'] > 0 ? $roa_val / $maxMin['roa'] : 0;
