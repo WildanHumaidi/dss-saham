@@ -6,17 +6,17 @@ export default {
       colors: {
         // Sidebar dark green
         sidebar: {
-          bg:       '#0d2818',
-          hover:    '#132f1e',
-          active:   '#ffffff',
-          border:   '#163321',
-          text:     '#7ab898',
-          textHover:'#b8d9c8',
-          textActive:'#0d2818',
+          bg: '#0d2818',
+          hover: '#132f1e',
+          active: '#ffffff',
+          border: '#163321',
+          text: '#7ab898',
+          textHover: '#b8d9c8',
+          textActive: '#0d2818',
         },
         // Brand green (emerald)
         brand: {
-          50:  '#f0fdf4',
+          50: '#f0fdf4',
           100: '#dcfce7',
           200: '#bbf7d0',
           300: '#86efac',
@@ -34,10 +34,10 @@ export default {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        card:    '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)',
-        'card-md':'0 4px 6px -1px rgba(0,0,0,.06), 0 2px 4px -2px rgba(0,0,0,.04)',
+        card: '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)',
+        'card-md': '0 4px 6px -1px rgba(0,0,0,.06), 0 2px 4px -2px rgba(0,0,0,.04)',
       },
     },
   },
   plugins: [],
-}
+};

@@ -18,7 +18,6 @@ class RatioService
      * - Rasio Arus Kas Operasi: arus_kas_operasi / total_aset (clamp 0 s/d 0.30)
      * - DER: total_liabilitas / total_ekuitas (clamp min 0)
      *
-     * @param int|null $tahunFilter
      * @return int Jumlah baris laporan keuangan yang diproses
      */
     public function calculateRatios(?int $tahunFilter = null): int
@@ -34,8 +33,8 @@ class RatioService
             return 0;
         }
 
-        $safeDiv = fn($num, $den) => $den != 0 ? $num / $den : 0;
-        $clamp   = fn($val, $min, $max) => max($min, min($max, $val));
+        $safeDiv = fn ($num, $den) => $den != 0 ? $num / $den : 0;
+        $clamp = fn ($val, $min, $max) => max($min, min($max, $val));
 
         DB::transaction(function () use ($laporan, $tahunFilter, $safeDiv, $clamp) {
             if ($tahunFilter) {
@@ -54,13 +53,13 @@ class RatioService
                 $der = max(0, $safeDiv($item->total_liabilitas, $item->total_ekuitas));
 
                 $rasioData[] = [
-                    'perusahaan_id'          => $item->perusahaan_id,
-                    'tahun'                  => $item->tahun,
-                    'roa'                    => round($roa, 4),
-                    'roe'                    => round($roe, 4),
-                    'npm'                    => round($npm, 4),
+                    'perusahaan_id' => $item->perusahaan_id,
+                    'tahun' => $item->tahun,
+                    'roa' => round($roa, 4),
+                    'roe' => round($roe, 4),
+                    'npm' => round($npm, 4),
                     'rasio_arus_kas_operasi' => round($kas, 6),
-                    'rasio_utang'            => round($der, 4),
+                    'rasio_utang' => round($der, 4),
                 ];
             }
 

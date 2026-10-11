@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\LaporanKeuangan;
 use App\Models\Perusahaan;
+use Illuminate\Http\Request;
 
 class LaporanController extends Controller
 {
@@ -24,23 +24,23 @@ class LaporanController extends Controller
     public function uploadNeraca(Request $request)
     {
         $validated = $request->validate([
-            'kode_saham'           => 'required|string|max:10',
-            'tahun'                => 'required|integer|between:2000,2100',
-            'total_aset'           => 'required|numeric',
-            'total_liabilitas'     => 'required|numeric',
-            'total_ekuitas'        => 'required|numeric',
-            'pendapatan'           => 'required|numeric',
-            'laba_bersih'          => 'required|numeric',
-            'arus_kas_operasi'     => 'required|numeric',
-            'harga_saham'          => 'nullable|numeric',
+            'kode_saham' => 'required|string|max:10',
+            'tahun' => 'required|integer|between:2000,2100',
+            'total_aset' => 'required|numeric',
+            'total_liabilitas' => 'required|numeric',
+            'total_ekuitas' => 'required|numeric',
+            'pendapatan' => 'required|numeric',
+            'laba_bersih' => 'required|numeric',
+            'arus_kas_operasi' => 'required|numeric',
+            'harga_saham' => 'nullable|numeric',
             'jumlah_saham_beredar' => 'nullable|numeric',
-            'dividen'              => 'nullable|numeric',
+            'dividen' => 'nullable|numeric',
         ]);
 
-        $kode       = strtoupper($validated['kode_saham']);
+        $kode = strtoupper($validated['kode_saham']);
         $perusahaan = Perusahaan::where('kode_saham', $kode)->first();
 
-        if (!$perusahaan) {
+        if (! $perusahaan) {
             return response()->json([
                 'message' => "Emiten {$kode} tidak ditemukan. Tambahkan dulu di Data Master.",
             ], 422);
@@ -48,21 +48,21 @@ class LaporanController extends Controller
 
         $laporan = LaporanKeuangan::firstOrNew([
             'perusahaan_id' => $perusahaan->id,
-            'tahun'         => $validated['tahun'],
+            'tahun' => $validated['tahun'],
         ]);
 
-        $isNew = !$laporan->exists;
+        $isNew = ! $laporan->exists;
 
         $laporan->fill([
-            'total_aset'           => $validated['total_aset'],
-            'total_liabilitas'     => $validated['total_liabilitas'],
-            'total_ekuitas'        => $validated['total_ekuitas'],
-            'pendapatan'           => $validated['pendapatan'],
-            'laba_bersih'          => $validated['laba_bersih'],
-            'arus_kas_operasi'     => $validated['arus_kas_operasi'],
-            'harga_saham'          => $validated['harga_saham']          ?? $laporan->harga_saham          ?? 0,
+            'total_aset' => $validated['total_aset'],
+            'total_liabilitas' => $validated['total_liabilitas'],
+            'total_ekuitas' => $validated['total_ekuitas'],
+            'pendapatan' => $validated['pendapatan'],
+            'laba_bersih' => $validated['laba_bersih'],
+            'arus_kas_operasi' => $validated['arus_kas_operasi'],
+            'harga_saham' => $validated['harga_saham'] ?? $laporan->harga_saham ?? 0,
             'jumlah_saham_beredar' => $validated['jumlah_saham_beredar'] ?? $laporan->jumlah_saham_beredar ?? 0,
-            'dividen'              => $validated['dividen']              ?? $laporan->dividen              ?? 0,
+            'dividen' => $validated['dividen'] ?? $laporan->dividen ?? 0,
         ]);
 
         // Hanya baris BARU yang otomatis berstatus 'draft'.
@@ -79,7 +79,7 @@ class LaporanController extends Controller
 
         return response()->json([
             'message' => "Data {$kode} tahun {$validated['tahun']} berhasil {$action}.",
-            'data'    => $laporan,
+            'data' => $laporan,
         ], $isNew ? 201 : 200);
     }
 }

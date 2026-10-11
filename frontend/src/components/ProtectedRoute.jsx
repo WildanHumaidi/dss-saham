@@ -14,10 +14,10 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-    const { token, isAdmin } = useAuth();
+  const { token, isAdmin } = useAuth();
 
-    if (!token) return <Navigate to="/login" replace />;
-    if (requireAdmin && !isAdmin) return <Navigate to="/dashboard" replace />;
+  if (!token) return <Navigate to="/login" replace />;
+  if (requireAdmin && !isAdmin) return <Navigate to="/dashboard" replace />;
 
-    return children ? children : <Outlet />;
+  return children ? children : <Outlet />;
 }

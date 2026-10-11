@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Kriteria;
+use Illuminate\Database\Seeder;
 
 class KriteriaSeeder extends Seeder
 {
@@ -21,7 +21,7 @@ class KriteriaSeeder extends Seeder
             // Pake updateOrCreate biar aman kalau di-run 2 kali
             Kriteria::updateOrCreate(['kode' => $k['kode']], $k);
         }
-        
+
         $this->command->info('✅ Data Kriteria SAW berhasil diisi!');
     }
 }

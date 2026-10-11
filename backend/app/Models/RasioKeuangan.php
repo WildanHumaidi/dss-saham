@@ -20,12 +20,12 @@ class RasioKeuangan extends Model
     ];
 
     protected $casts = [
-        'tahun'                  => 'integer',
-        'roa'                    => 'decimal:6',
-        'roe'                    => 'decimal:6',
-        'npm'                    => 'decimal:6',
+        'tahun' => 'integer',
+        'roa' => 'decimal:6',
+        'roe' => 'decimal:6',
+        'npm' => 'decimal:6',
         'rasio_arus_kas_operasi' => 'decimal:6',
-        'rasio_utang'            => 'decimal:6',
+        'rasio_utang' => 'decimal:6',
     ];
 
     // ─── Relationships ────────────────────────────────────────────────────────
@@ -52,11 +52,11 @@ class RasioKeuangan extends Model
     public function toRatioArray(): array
     {
         return [
-            'roa'                    => (float) $this->roa,
-            'roe'                    => (float) $this->roe,
-            'npm'                    => (float) $this->npm,
+            'roa' => (float) $this->roa,
+            'roe' => (float) $this->roe,
+            'npm' => (float) $this->npm,
             'rasio_arus_kas_operasi' => (float) $this->rasio_arus_kas_operasi,
-            'rasio_utang'            => (float) $this->rasio_utang,
+            'rasio_utang' => (float) $this->rasio_utang,
         ];
     }
 }

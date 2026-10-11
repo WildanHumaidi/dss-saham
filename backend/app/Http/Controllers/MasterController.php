@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Perusahaan;
 use App\Models\Kriteria;
+use App\Models\Perusahaan;
+use Illuminate\Http\Request;
 
 class MasterController extends Controller
 {
@@ -20,9 +20,9 @@ class MasterController extends Controller
     public function storePerusahaan(Request $request)
     {
         $validated = $request->validate([
-            'kode_saham'      => 'required|string|max:10|unique:perusahaan,kode_saham',
+            'kode_saham' => 'required|string|max:10|unique:perusahaan,kode_saham',
             'nama_perusahaan' => 'required|string|max:255',
-            'sektor'          => 'nullable|string|max:100',
+            'sektor' => 'nullable|string|max:100',
         ]);
 
         $validated['kode_saham'] = strtoupper($validated['kode_saham']);
@@ -31,7 +31,7 @@ class MasterController extends Controller
 
         return response()->json([
             'message' => "{$p->kode_saham} berhasil ditambahkan.",
-            'data'    => $p,
+            'data' => $p,
         ], 201);
     }
 
@@ -42,14 +42,14 @@ class MasterController extends Controller
 
         $validated = $request->validate([
             'nama_perusahaan' => 'sometimes|required|string|max:255',
-            'sektor'          => 'nullable|string|max:100',
+            'sektor' => 'nullable|string|max:100',
         ]);
 
         $perusahaan->update($validated);
 
         return response()->json([
             'message' => "{$perusahaan->kode_saham} berhasil diperbarui.",
-            'data'    => $perusahaan,
+            'data' => $perusahaan,
         ]);
     }
 
@@ -57,7 +57,7 @@ class MasterController extends Controller
     public function destroyPerusahaan(int $id)
     {
         $perusahaan = Perusahaan::findOrFail($id);
-        $kode       = $perusahaan->kode_saham;
+        $kode = $perusahaan->kode_saham;
 
         $perusahaan->delete();
 
@@ -81,24 +81,24 @@ class MasterController extends Controller
         $kriteria = Kriteria::findOrFail($id);
 
         $validated = $request->validate([
-            'kode'           => "sometimes|required|string|max:5|unique:kriteria,kode,{$id}",
-            'nama_kriteria'  => 'sometimes|required|string|max:255',
-            'atribut'        => 'sometimes|required|in:benefit,cost',
-            'bobot_awal'     => 'sometimes|required|numeric|min:0.01',
+            'kode' => "sometimes|required|string|max:5|unique:kriteria,kode,{$id}",
+            'nama_kriteria' => 'sometimes|required|string|max:255',
+            'atribut' => 'sometimes|required|in:benefit,cost',
+            'bobot_awal' => 'sometimes|required|numeric|min:0.01',
         ]);
 
         $kriteria->update($validated);
 
         return response()->json([
             'message' => 'Kriteria berhasil diperbarui.',
-            'data'    => $kriteria,
+            'data' => $kriteria,
         ]);
     }
 
     public function normalizeKriteria()
     {
         $kriteria = Kriteria::all();
-        $total    = $kriteria->sum('bobot_awal');
+        $total = $kriteria->sum('bobot_awal');
 
         if ($total <= 0) {
             return response()->json(['message' => 'Total bobot harus lebih dari 0.'], 422);

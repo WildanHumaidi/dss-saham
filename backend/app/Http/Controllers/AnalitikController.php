@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\LaporanKeuangan;
 use App\Models\Perusahaan;
-use App\Models\Kriteria;
 use App\Services\RatioService;
 use App\Services\SmartSawService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
@@ -25,11 +24,11 @@ class AnalitikController extends Controller
     {
         $tahun = $request->query('tahun');
 
-        if (!$tahun) {
+        if (! $tahun) {
             $tahun = LaporanKeuangan::where('status_data', 'dipublikasi')->max('tahun');
         }
 
-        if (!$tahun) {
+        if (! $tahun) {
             return response()->json(['status' => 'success', 'data' => []]);
         }
 
@@ -39,26 +38,26 @@ class AnalitikController extends Controller
             ->get();
 
         $screenerData = $laporan->map(function ($item) {
-            $safeDiv = fn($num, $den) => $den != 0 ? $num / $den : 0;
+            $safeDiv = fn ($num, $den) => $den != 0 ? $num / $den : 0;
 
-            $eps  = $safeDiv($item->laba_bersih, $item->jumlah_saham_beredar);
+            $eps = $safeDiv($item->laba_bersih, $item->jumlah_saham_beredar);
             $bvps = $safeDiv($item->total_ekuitas, $item->jumlah_saham_beredar);
-            $per  = $safeDiv($item->harga_saham, $eps);
-            $pbv  = $safeDiv($item->harga_saham, $bvps);
-            $roe  = $safeDiv($item->laba_bersih, $item->total_ekuitas) * 100;
-            $der  = $safeDiv($item->total_liabilitas, $item->total_ekuitas);
+            $per = $safeDiv($item->harga_saham, $eps);
+            $pbv = $safeDiv($item->harga_saham, $bvps);
+            $roe = $safeDiv($item->laba_bersih, $item->total_ekuitas) * 100;
+            $der = $safeDiv($item->total_liabilitas, $item->total_ekuitas);
 
             return [
-                'id'              => $item->id,
-                'kode_saham'      => $item->perusahaan->kode_saham,
+                'id' => $item->id,
+                'kode_saham' => $item->perusahaan->kode_saham,
                 'nama_perusahaan' => $item->perusahaan->nama_perusahaan,
-                'harga_saham'     => $item->harga_saham,
-                'eps'             => round($eps, 2),
-                'bvps'            => round($bvps, 2),
-                'per'             => round($per, 2),
-                'pbv'             => round($pbv, 2),
-                'roe'             => round($roe, 2),
-                'der'             => round($der, 2),
+                'harga_saham' => $item->harga_saham,
+                'eps' => round($eps, 2),
+                'bvps' => round($bvps, 2),
+                'per' => round($per, 2),
+                'pbv' => round($pbv, 2),
+                'roe' => round($roe, 2),
+                'der' => round($der, 2),
             ];
         });
 
@@ -77,11 +76,12 @@ class AnalitikController extends Controller
         if ($processed === 0) {
             return response()->json([
                 'message' => 'Tidak ada data berstatus "dipublikasi" untuk dihitung. '
-                    . 'Publikasikan data lewat menu Draft atau Admin terlebih dahulu.',
+                    .'Publikasikan data lewat menu Draft atau Admin terlebih dahulu.',
             ], 404);
         }
 
-        $label = $tahunFilter ? "tahun {$tahunFilter}" : "seluruh tahun";
+        $label = $tahunFilter ? "tahun {$tahunFilter}" : 'seluruh tahun';
+
         return response()->json(['message' => "Rasio {$label} berhasil dihitung dari data yang sudah dipublikasikan!"]);
     }
 
@@ -93,6 +93,7 @@ class AnalitikController extends Controller
     {
         try {
             $smartSawService->calculateAllRankings();
+
             return response()->json(['message' => 'Peringkat seluruh periode historis selesai dihitung!']);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
@@ -127,10 +128,11 @@ class AnalitikController extends Controller
                 ->get();
 
             $data = $data->map(function ($item, $key) {
-                $item->peringkat_ke     = $key + 1;
+                $item->peringkat_ke = $key + 1;
                 $item->status_kesehatan = $item->nilai_preferensi >= 0.8
                     ? 'Sangat Sehat'
                     : ($item->nilai_preferensi >= 0.6 ? 'Sehat' : 'Kurang Sehat');
+
                 return $item;
             });
 
@@ -167,7 +169,7 @@ class AnalitikController extends Controller
         foreach ($tren->groupBy('tahun') as $tahun => $rows) {
             $row = ['year' => $tahun];
             foreach ($rows as $r) {
-                $kode       = $perusahaans[$r->perusahaan_id]->kode_saham ?? '?';
+                $kode = $perusahaans[$r->perusahaan_id]->kode_saham ?? '?';
                 $row[$kode] = round($r->nilai_preferensi, 4);
             }
             $formatted[] = $row;
@@ -202,14 +204,14 @@ class AnalitikController extends Controller
                 DB::raw('AVG(rasio_arus_kas_operasi) as rasio_arus_kas_operasi'),
                 DB::raw('AVG(rasio_utang) as rasio_utang')
             )
-            ->groupBy('perusahaan.kode_saham', 'perusahaan.nama_perusahaan');
+                ->groupBy('perusahaan.kode_saham', 'perusahaan.nama_perusahaan');
         } else {
             $query->where('rasio_keuangan.tahun', $tahun)
-                  ->select(
-                      'rasio_keuangan.*',
-                      'perusahaan.kode_saham',
-                      'perusahaan.nama_perusahaan'
-                  );
+                ->select(
+                    'rasio_keuangan.*',
+                    'perusahaan.kode_saham',
+                    'perusahaan.nama_perusahaan'
+                );
         }
 
         return response()->json(['data' => $query->get()]);

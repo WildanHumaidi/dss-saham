@@ -13,6 +13,7 @@ class SmartSawService
      * Jalankan tahapan normalisasi SMART (bobot) dan SAW (matriks keputusan & ranking).
      *
      * @return int Jumlah total baris peringkat yang dihasilkan
+     *
      * @throws RuntimeException Jika data rasio atau kriteria kosong
      * @throws InvalidArgumentException Jika total bobot kriteria <= 0
      */
@@ -48,12 +49,12 @@ class SmartSawService
         DB::transaction(function () use ($dataRasio, $bobot, &$totalInserted) {
             DB::table('peringkat')->delete();
 
-            $insertData    = [];
+            $insertData = [];
             $groupedByYear = $dataRasio->groupBy('tahun');
-            $derFloor      = 0.05;
+            $derFloor = 0.05;
 
             foreach ($groupedByYear as $tahun => $rasioTahun) {
-                $clampBenefit = fn($val, $cap) => max(0, min($val, $cap));
+                $clampBenefit = fn ($val, $cap) => max(0, min($val, $cap));
 
                 $maxMin = [
                     'roa' => max(0.0001, $clampBenefit($rasioTahun->max('roa'), 40)),
@@ -61,7 +62,7 @@ class SmartSawService
                     'npm' => max(0.0001, $clampBenefit($rasioTahun->max('npm'), 60)),
                     'kas' => max(0.0001, $clampBenefit($rasioTahun->max('rasio_arus_kas_operasi'), 0.30)),
                     // Floor diterapkan ke SETIAP nilai DER dulu, baru dicari minimumnya
-                    'der' => $rasioTahun->map(fn($r) => max($r->rasio_utang, $derFloor))->min(),
+                    'der' => $rasioTahun->map(fn ($r) => max($r->rasio_utang, $derFloor))->min(),
                 ];
 
                 $hasilTahun = [];
@@ -88,20 +89,20 @@ class SmartSawService
 
                     $hasilTahun[] = [
                         'perusahaan_id' => $row->perusahaan_id,
-                        'tahun'         => $tahun,
-                        'nilai'         => $nilai_v,
+                        'tahun' => $tahun,
+                        'nilai' => $nilai_v,
                     ];
                 }
 
                 // 3. TAHAP PERANGKINGAN (Sorting dari nilai terbesar ke terkecil)
-                usort($hasilTahun, fn($a, $b) => $b['nilai'] <=> $a['nilai']);
+                usort($hasilTahun, fn ($a, $b) => $b['nilai'] <=> $a['nilai']);
 
                 foreach ($hasilTahun as $index => $hasil) {
                     $insertData[] = [
-                        'perusahaan_id'    => $hasil['perusahaan_id'],
-                        'tahun'            => $tahun,
+                        'perusahaan_id' => $hasil['perusahaan_id'],
+                        'tahun' => $tahun,
                         'nilai_preferensi' => $hasil['nilai'],
-                        'peringkat_ke'     => $index + 1,
+                        'peringkat_ke' => $index + 1,
                         'status_kesehatan' => $hasil['nilai'] >= 0.8
                             ? 'Sangat Sehat'
                             : ($hasil['nilai'] >= 0.6 ? 'Sehat' : 'Kurang Sehat'),

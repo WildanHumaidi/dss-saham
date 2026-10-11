@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LaporanKeuangan;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
-use App\Models\User;
-use App\Models\LaporanKeuangan;
 
 class AdminController extends Controller
 {
@@ -24,7 +24,7 @@ class AdminController extends Controller
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -39,22 +39,22 @@ class AdminController extends Controller
     public function storeUser(Request $request)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => ['required', Password::min(6)],
-            'role'     => 'required|in:admin,user',
+            'role' => 'required|in:admin,user',
         ]);
 
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role'     => $validated['role'],
+            'role' => $validated['role'],
         ]);
 
         return response()->json([
             'message' => "User {$user->name} berhasil dibuat.",
-            'data'    => $user->only(['id', 'name', 'email', 'role', 'created_at']),
+            'data' => $user->only(['id', 'name', 'email', 'role', 'created_at']),
         ], 201);
     }
 
@@ -66,16 +66,22 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
 
         $validated = $request->validate([
-            'name'     => 'sometimes|required|string|max:255',
-            'email'    => "sometimes|required|email|unique:users,email,{$id}",
+            'name' => 'sometimes|required|string|max:255',
+            'email' => "sometimes|required|email|unique:users,email,{$id}",
             'password' => ['sometimes', 'nullable', Password::min(6)],
-            'role'     => 'sometimes|required|in:admin,user',
+            'role' => 'sometimes|required|in:admin,user',
         ]);
 
-        if (isset($validated['name']))  $user->name  = $validated['name'];
-        if (isset($validated['email'])) $user->email = $validated['email'];
-        if (isset($validated['role']))  $user->role  = $validated['role'];
-        if (!empty($validated['password'])) {
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
+        }
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+        if (isset($validated['role'])) {
+            $user->role = $validated['role'];
+        }
+        if (! empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
 
@@ -83,7 +89,7 @@ class AdminController extends Controller
 
         return response()->json([
             'message' => "User {$user->name} berhasil diperbarui.",
-            'data'    => $user->only(['id', 'name', 'email', 'role', 'updated_at']),
+            'data' => $user->only(['id', 'name', 'email', 'role', 'updated_at']),
         ]);
     }
 
@@ -149,24 +155,24 @@ class AdminController extends Controller
         $laporan = LaporanKeuangan::findOrFail($id);
 
         $validated = $request->validate([
-            'tahun'                => 'sometimes|required|integer|between:2000,2100',
-            'total_aset'           => 'sometimes|required|numeric',
-            'total_liabilitas'     => 'sometimes|required|numeric',
-            'total_ekuitas'        => 'sometimes|required|numeric',
-            'pendapatan'           => 'sometimes|required|numeric',
-            'laba_bersih'          => 'sometimes|required|numeric',
-            'arus_kas_operasi'     => 'sometimes|required|numeric',
-            'harga_saham'          => 'sometimes|nullable|numeric',
+            'tahun' => 'sometimes|required|integer|between:2000,2100',
+            'total_aset' => 'sometimes|required|numeric',
+            'total_liabilitas' => 'sometimes|required|numeric',
+            'total_ekuitas' => 'sometimes|required|numeric',
+            'pendapatan' => 'sometimes|required|numeric',
+            'laba_bersih' => 'sometimes|required|numeric',
+            'arus_kas_operasi' => 'sometimes|required|numeric',
+            'harga_saham' => 'sometimes|nullable|numeric',
             'jumlah_saham_beredar' => 'sometimes|nullable|numeric',
-            'dividen'              => 'sometimes|nullable|numeric',
-            'status_data'          => 'sometimes|required|in:draft,direview,dipublikasi',
+            'dividen' => 'sometimes|nullable|numeric',
+            'status_data' => 'sometimes|required|in:draft,direview,dipublikasi',
         ]);
 
         $laporan->update($validated);
 
         return response()->json([
             'message' => 'Laporan berhasil diperbarui.',
-            'data'    => $laporan,
+            'data' => $laporan,
         ]);
     }
 

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Models\DraftLaporanKeuangan;
 use App\Models\LaporanKeuangan;
 use App\Models\Perusahaan;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DraftLaporanController extends Controller
 {
@@ -18,16 +18,16 @@ class DraftLaporanController extends Controller
     public function ekstrakGambar(Request $request)
     {
         $validated = $request->validate([
-            'kode_saham'  => 'required|string|max:10',
-            'tahun'       => 'required|integer|between:2000,2100',
+            'kode_saham' => 'required|string|max:10',
+            'tahun' => 'required|integer|between:2000,2100',
             'tipe_gambar' => 'required|in:aset,liabilitas',   // aset | liabilitas
-            'gambar'      => 'required|image|max:5120',        // max 5 MB
+            'gambar' => 'required|image|max:5120',        // max 5 MB
         ]);
 
-        $kode       = strtoupper($validated['kode_saham']);
+        $kode = strtoupper($validated['kode_saham']);
         $perusahaan = Perusahaan::where('kode_saham', $kode)->first();
 
-        if (!$perusahaan) {
+        if (! $perusahaan) {
             return response()->json([
                 'message' => "Emiten {$kode} tidak ditemukan. Tambahkan dulu di Data Master.",
             ], 422);
@@ -39,7 +39,7 @@ class DraftLaporanController extends Controller
         // Upsert draft
         $draft = DraftLaporanKeuangan::firstOrCreate(
             ['perusahaan_id' => $perusahaan->id, 'tahun' => $validated['tahun']],
-            ['status_draft'  => 'incomplete']
+            ['status_draft' => 'incomplete']
         );
 
         if ($validated['tipe_gambar'] === 'aset') {
@@ -51,8 +51,8 @@ class DraftLaporanController extends Controller
 
         return response()->json([
             'message' => 'Gambar berhasil disimpan.',
-            'path'    => $path,
-            'data'    => $draft,
+            'path' => $path,
+            'data' => $draft,
         ]);
     }
 
@@ -63,22 +63,22 @@ class DraftLaporanController extends Controller
     public function uploadNeraca(Request $request)
     {
         $validated = $request->validate([
-            'kode_saham'           => 'required|string|max:10',
-            'tahun'                => 'required|integer|between:2000,2100',
-            'skala_nominal'        => 'nullable|string|max:20',
-            'total_aset'           => 'nullable|numeric',
-            'total_liabilitas'     => 'nullable|numeric',
-            'total_ekuitas'        => 'nullable|numeric',
+            'kode_saham' => 'required|string|max:10',
+            'tahun' => 'required|integer|between:2000,2100',
+            'skala_nominal' => 'nullable|string|max:20',
+            'total_aset' => 'nullable|numeric',
+            'total_liabilitas' => 'nullable|numeric',
+            'total_ekuitas' => 'nullable|numeric',
             'jumlah_saham_beredar' => 'nullable|numeric',
-            'pendapatan'           => 'nullable|numeric',
-            'laba_bersih'          => 'nullable|numeric',
-            'arus_kas_operasi'     => 'nullable|numeric',
+            'pendapatan' => 'nullable|numeric',
+            'laba_bersih' => 'nullable|numeric',
+            'arus_kas_operasi' => 'nullable|numeric',
         ]);
 
-        $kode       = strtoupper($validated['kode_saham']);
+        $kode = strtoupper($validated['kode_saham']);
         $perusahaan = Perusahaan::where('kode_saham', $kode)->first();
 
-        if (!$perusahaan) {
+        if (! $perusahaan) {
             return response()->json([
                 'message' => "Emiten {$kode} tidak ditemukan. Tambahkan dulu di Data Master.",
             ], 422);
@@ -86,7 +86,7 @@ class DraftLaporanController extends Controller
 
         $fillable = collect($validated)
             ->except(['kode_saham', 'tahun'])
-            ->filter(fn($v) => !is_null($v))
+            ->filter(fn ($v) => ! is_null($v))
             ->toArray();
 
         $draft = DraftLaporanKeuangan::updateOrCreate(
@@ -104,7 +104,7 @@ class DraftLaporanController extends Controller
 
         return response()->json([
             'message' => "Draft {$kode} tahun {$validated['tahun']} berhasil {$action}.",
-            'data'    => $draft,
+            'data' => $draft,
         ], $draft->wasRecentlyCreated ? 201 : 200);
     }
 
@@ -122,13 +122,13 @@ class DraftLaporanController extends Controller
     {
         $validated = $request->validate([
             'kode_saham' => 'required|string|max:10',
-            'tahun'      => 'required|integer|between:2000,2100',
+            'tahun' => 'required|integer|between:2000,2100',
         ]);
 
-        $kode       = strtoupper($validated['kode_saham']);
+        $kode = strtoupper($validated['kode_saham']);
         $perusahaan = Perusahaan::where('kode_saham', $kode)->first();
 
-        if (!$perusahaan) {
+        if (! $perusahaan) {
             return response()->json([
                 'message' => "Emiten {$kode} tidak ditemukan. Tambahkan dulu di Data Master.",
             ], 422);
@@ -138,13 +138,13 @@ class DraftLaporanController extends Controller
             ->where('tahun', $validated['tahun'])
             ->first();
 
-        if (!$draft) {
+        if (! $draft) {
             return response()->json([
                 'message' => "Draft {$kode} tahun {$validated['tahun']} belum ada. Isi data draft terlebih dahulu.",
             ], 404);
         }
 
-        if (!$draft->isReadyToPublish()) {
+        if (! $draft->isReadyToPublish()) {
             return response()->json([
                 'message' => 'Draft belum lengkap. Pastikan total_aset, total_liabilitas, dan total_ekuitas sudah diisi.',
             ], 422);
@@ -157,17 +157,17 @@ class DraftLaporanController extends Controller
         $laporan = LaporanKeuangan::updateOrCreate(
             ['perusahaan_id' => $perusahaan->id, 'tahun' => $validated['tahun']],
             [
-                'total_aset'           => $draft->total_aset,
-                'total_liabilitas'     => $draft->total_liabilitas,
-                'total_ekuitas'        => $draft->total_ekuitas,
+                'total_aset' => $draft->total_aset,
+                'total_liabilitas' => $draft->total_liabilitas,
+                'total_ekuitas' => $draft->total_ekuitas,
                 'jumlah_saham_beredar' => $draft->jumlah_saham_beredar ?? ($existing->jumlah_saham_beredar ?? 0),
-                'pendapatan'           => $draft->pendapatan           ?? ($existing->pendapatan ?? 0),
-                'laba_bersih'          => $draft->laba_bersih          ?? ($existing->laba_bersih ?? 0),
-                'arus_kas_operasi'     => $draft->arus_kas_operasi      ?? ($existing->arus_kas_operasi ?? 0),
-                'skala_nominal'        => $draft->skala_nominal         ?? ($existing->skala_nominal ?? 'Miliar'),
-                'harga_saham'          => $existing->harga_saham        ?? 0,
-                'dividen'              => $existing->dividen            ?? 0,
-                'status_data'          => 'dipublikasi',
+                'pendapatan' => $draft->pendapatan ?? ($existing->pendapatan ?? 0),
+                'laba_bersih' => $draft->laba_bersih ?? ($existing->laba_bersih ?? 0),
+                'arus_kas_operasi' => $draft->arus_kas_operasi ?? ($existing->arus_kas_operasi ?? 0),
+                'skala_nominal' => $draft->skala_nominal ?? ($existing->skala_nominal ?? 'Miliar'),
+                'harga_saham' => $existing->harga_saham ?? 0,
+                'dividen' => $existing->dividen ?? 0,
+                'status_data' => 'dipublikasi',
             ]
         );
 
@@ -177,7 +177,7 @@ class DraftLaporanController extends Controller
 
         return response()->json([
             'message' => "Data {$kode} tahun {$validated['tahun']} berhasil dipublikasikan.",
-            'data'    => $laporan,
+            'data' => $laporan,
         ]);
     }
 }

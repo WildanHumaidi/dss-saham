@@ -2,16 +2,15 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Perusahaan;
-use App\Models\LaporanKeuangan;
 use App\Models\Kriteria;
-use App\Models\RasioKeuangan;
+use App\Models\LaporanKeuangan;
 use App\Models\Peringkat;
+use App\Models\Perusahaan;
+use App\Models\RasioKeuangan;
 use App\Services\RatioService;
 use App\Services\SmartSawService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ServicesTest extends TestCase
 {
@@ -35,7 +34,7 @@ class ServicesTest extends TestCase
             'status_data' => 'dipublikasi',
         ]);
 
-        $service = new RatioService();
+        $service = new RatioService;
         $processed = $service->calculateRatios(2024);
 
         $this->assertEquals(1, $processed);
@@ -69,7 +68,7 @@ class ServicesTest extends TestCase
         Kriteria::create(['kode' => 'C4', 'nama_kriteria' => 'Kas', 'atribut' => 'benefit', 'bobot_awal' => 15]);
         Kriteria::create(['kode' => 'C5', 'nama_kriteria' => 'DER', 'atribut' => 'cost', 'bobot_awal' => 15]);
 
-        $service = new SmartSawService();
+        $service = new SmartSawService;
         $total = $service->calculateAllRankings();
 
         $this->assertEquals(1, $total);

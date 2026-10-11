@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class DraftLaporanKeuangan extends Model
 {
-    protected $table    = 'draft_laporan_keuangan';
+    protected $table = 'draft_laporan_keuangan';
+
     protected $fillable = [
         'perusahaan_id', 'tahun', 'skala_nominal',
         'total_aset', 'total_liabilitas', 'total_ekuitas',
@@ -18,9 +19,9 @@ class DraftLaporanKeuangan extends Model
     /** Cek apakah draft sudah layak dipublikasi ke laporan_keuangan */
     public function isReadyToPublish(): bool
     {
-        return !is_null($this->total_aset)
-            && !is_null($this->total_liabilitas)
-            && !is_null($this->total_ekuitas);
+        return ! is_null($this->total_aset)
+            && ! is_null($this->total_liabilitas)
+            && ! is_null($this->total_ekuitas);
     }
 
     public function perusahaan()

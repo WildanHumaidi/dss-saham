@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Kriteria;
 use App\Models\Perusahaan;
 use App\Models\RasioKeuangan;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AnalitikZeroWeightTest extends TestCase
 {
